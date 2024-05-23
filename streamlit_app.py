@@ -175,17 +175,23 @@ with st.sidebar as sb:
         st.subheader("Choose what to paint")
         paint_walls = st.checkbox("Walls", value=True)
         paint_ceiling = st.checkbox("Ceiling")
+        surfaces = [paint_walls, paint_ceiling]
+        has_at_least_one_surface = any(surfaces)
+        if not has_at_least_one_surface:
+            error_message1 = "At least one selection is required"
+            st.error(error_message1)
         
         st.subheader("Choose area to paint")
         paint_dining_lounge_room = st.checkbox("Dining/Lounge Room", value=True)
         paint_bedrooms = st.checkbox("Bedrooms", value=True)
         paint_kitchen = st.checkbox("Kitchen",  value=False)
         paint_bathrooms = st.checkbox("Bathrooms/Toilets", value=False)
-        surfaces = [paint_bathrooms, paint_bedrooms, paint_kitchen, paint_walls, paint_ceiling]
-        has_at_least_one_surface = any(surfaces)
-        if not has_at_least_one_surface:
-            error_message = "At least one area is required"
-            st.markdown(f"<span style='color:red'>{error_message}</span>", unsafe_allow_html=True)
+
+        areas = [paint_dining_lounge_room, paint_bathrooms, paint_bedrooms, paint_kitchen]
+        has_at_least_one_area = any(areas)
+        if not has_at_least_one_area:
+            error_message2 = "At least one area is required"
+            st.error(error_message2)
 
         num_coats = st.slider("How many coats?", min_value=1, max_value=3, value=2, step=1)
         wall_height = st.number_input("Wall height (m)", value=2.5)
@@ -225,7 +231,7 @@ if image is not None:
     with st.container():
         # Error message (if any)
         if "error" in st.session_state and st.session_state["error"] is not None:
-            st.markdown(f"<span style='color:red'>{st.session_state['error']}</span>", unsafe_allow_html=True)
+            st.error(st.session_state['error'])
             st.stop()
 
         if st.session_state["show_prompt"]:

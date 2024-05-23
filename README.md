@@ -2,6 +2,8 @@
 
 This app uses Google Vision Pro to analyse a floorplan and calculate the amount of paint required for walls and ceilings.
 
+See [Live demo](https://mmhleung-diypaintestimator.streamlit.app/).
+
 ## Pre-requisites
 * Gemini API Key 
 
