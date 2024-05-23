@@ -117,17 +117,21 @@ def build_prompt(params_dict):
         area_inclusions.append("kitchen")
     
     paint_type_hint = f"{sentence_joiner(what_inclusions)} use different types of paint." \
-            if len(what_inclusions) > 1 else ""
+        if len(what_inclusions) > 0 else ""
+    
+    walls_paint_hint = 'To calculate wall area to paint for a rectangular room, use formula: 2*(width + length) * height' \
+        if "walls" in what_inclusions else ""
+
+    ceiling_paint_hint = 'To calculate ceiling area to paint for a rectangular room, use formula: width * length' \
+        if "ceiling" in what_inclusions else ""
 
     prompt = f"""I want to paint the interior {sentence_joiner(what_inclusions)} of the house, including {sentence_joiner(area_inclusions)}.
 {paint_type_hint}
-
-To calculate wall area to paint for a rectangular room, use formula: 2*(width + length) * height
-To calculate ceiling area to paint for a rectangular room, use formula: width * length
+{walls_paint_hint}
+{ceiling_paint_hint}
 
 Assume that wall height is {params["wall_height"]}m.
 I need to paint {params["num_coats"]} coats for everything.
-
 Assume 1 litre of paint covers {params["paint_coverage"]} sqm for all types of paint.
 Provide breakdown of the amount of paint required for each of {sentence_joiner(what_inclusions)}.
 Calculate the total amount of paint required for each of {sentence_joiner(what_inclusions)}.
@@ -148,6 +152,9 @@ with st.sidebar as sb:
     if not gemini_api_key:
         load_dotenv()
         gemini_api_key = os.environ.get("GEMINI_API_KEY")
+        if not gemini_api_key:
+            st.error("Please enter Google Gemini API Key")
+            st.stop()
 
     if not is_genai_configured:
         genai.configure(api_key=gemini_api_key)
