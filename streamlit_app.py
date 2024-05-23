@@ -98,18 +98,11 @@ def build_prompt(params_dict):
     what_to_paint = params_dict["what"]
     areas_to_paint = params_dict["areas"]
 
-    wall_height = params_dict["wall_height"]
-    door_height = params_dict["door_height"]
-    door_width = params_dict["door_width"]
-
     if what_to_paint['paint_ceiling']:
         what_inclusions.append("ceiling")
 
     if what_to_paint['paint_walls']:
         what_inclusions.append("walls")
-
-    if what_to_paint['paint_doors']:
-        what_inclusions.append("doors")
 
     if areas_to_paint['paint_bedrooms']:
         area_inclusions.append("bedrooms")
@@ -123,19 +116,19 @@ def build_prompt(params_dict):
     if areas_to_paint['paint_kitchen']:
         area_inclusions.append("kitchen")
     
-    door_hint = f"Assume that door height is {door_height}mm and width is {door_width}mm. Both sides of the door need to be painted." \
-            if what_to_paint['paint_doors'] else ""
+    paint_type_hint = f"{sentence_joiner(what_inclusions)} use different types of paint." \
+            if len(what_inclusions) > 1 else ""
 
     prompt = f"""I want to paint the interior {sentence_joiner(what_inclusions)} of the house, including {sentence_joiner(area_inclusions)}.
-Ceilings use one type of paint.
-Walls use another type of paint.
-Doors use another type of paint.
+{paint_type_hint}
 
-Assume that wall height is {wall_height}m. 
-{door_hint}
-I need to paint {num_coats} coats for everything.
+To calculate wall area to paint for a rectangular room, use formula: 2*(width + length) * height
+To calculate ceiling area to paint for a rectangular room, use formula: width * length
 
-Assume 1 litre of paint covers 10sqm for all types of paint.
+Assume that wall height is {params["wall_height"]}m.
+I need to paint {params["num_coats"]} coats for everything.
+
+Assume 1 litre of paint covers {params["paint_coverage"]} sqm for all types of paint.
 Provide breakdown of the amount of paint required for each of {sentence_joiner(what_inclusions)}.
 Calculate the total amount of paint required for each of {sentence_joiner(what_inclusions)}.
 """
@@ -154,7 +147,7 @@ with st.sidebar as sb:
     gemini_api_key = st.text_input("Please enter Google Gemini API Key", key="gemini_api_key", type="password", on_change=on_api_key_changed)
     if not gemini_api_key:
         load_dotenv()
-        gemini_api_key = os.environ["GEMINI_API_KEY"]
+        gemini_api_key = os.environ.get("GEMINI_API_KEY")
 
     if not is_genai_configured:
         genai.configure(api_key=gemini_api_key)
@@ -175,14 +168,13 @@ with st.sidebar as sb:
         st.subheader("Choose what to paint")
         paint_walls = st.checkbox("Walls", value=True)
         paint_ceiling = st.checkbox("Ceiling")
-        paint_doors = st.checkbox("Doors")
         
         st.subheader("Choose area to paint")
         paint_dining_lounge_room = st.checkbox("Dining/Lounge Room", value=True)
         paint_bedrooms = st.checkbox("Bedrooms", value=True)
         paint_kitchen = st.checkbox("Kitchen",  value=False)
         paint_bathrooms = st.checkbox("Bathrooms/Toilets", value=False)
-        surfaces = [paint_bathrooms, paint_bedrooms, paint_kitchen, paint_walls, paint_ceiling, paint_doors]
+        surfaces = [paint_bathrooms, paint_bedrooms, paint_kitchen, paint_walls, paint_ceiling]
         has_at_least_one_surface = any(surfaces)
         if not has_at_least_one_surface:
             error_message = "At least one area is required"
@@ -190,19 +182,12 @@ with st.sidebar as sb:
 
         num_coats = st.slider("How many coats?", min_value=1, max_value=3, value=2, step=1)
         wall_height = st.number_input("Wall height (m)", value=2.5)
-        if paint_doors:
-            door_height = st.number_input("Door height (mm)", value=2048)
-            door_width = st.number_input("Door width (mm)", value=820)
-        else:
-            # Use defaults
-            door_height = 2048
-            door_width = 820
+        paint_coverage = st.number_input("Paint coverage sqm per litre", value=10)
 
         params = {
             "what": {
                 "paint_walls": paint_walls,
                 "paint_ceiling": paint_ceiling,
-                "paint_doors": paint_doors,
             },
             "areas": {
                 "paint_bedrooms": paint_bedrooms,
@@ -212,11 +197,12 @@ with st.sidebar as sb:
             },
             "num_coats": num_coats,
             "wall_height": wall_height,
-            "door_height": door_height,
-            "door_width": door_width
+            "paint_coverage": paint_coverage
         }
         prompt = build_prompt(params)
         st.session_state.update({ "prompt": prompt })
+
+        st.session_state["show_prompt"] = st.checkbox("Show Prompt", value=False)
 
         use_custom_prompt = st.checkbox("Use custom prompt")
         if use_custom_prompt:
@@ -234,6 +220,10 @@ if image is not None:
         if "error" in st.session_state and st.session_state["error"] is not None:
             st.markdown(f"<span style='color:red'>{st.session_state['error']}</span>", unsafe_allow_html=True)
             st.stop()
+
+        if st.session_state["show_prompt"]:
+            st.subheader("Prompt")
+            st.write(custom_prompt if use_custom_prompt else st.session_state['prompt'])
 
         # Response
         if "llm_response" in st.session_state:
