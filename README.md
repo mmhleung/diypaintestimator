@@ -4,6 +4,8 @@ This app uses Google Vision Pro to analyse a floorplan and calculate the amount 
 
 See [Live demo](https://mmhleung-diypaintestimator.streamlit.app/).
 
+![screenshot](./images/screenshot.png)
+
 ## Pre-requisites
 * Gemini API Key 
 
