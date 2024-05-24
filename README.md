@@ -22,8 +22,3 @@ source .venv/scripts/activate
 ```bash
 streamlit run streamlit_app.py
 ```
-
-## Run command line
-```bash
-python google_api_chat.py
-```
