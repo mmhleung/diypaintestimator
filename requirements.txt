@@ -2,3 +2,4 @@ python-dotenv
 Pillow
 google-generativeai
 google-ai-generativelanguage
+protobuf>=6.33.5 # not directly required, pinned by Snyk to avoid a vulnerability
